@@ -12,6 +12,7 @@ import edu.hawaii.its.api.type.AdminListsHolder;
 import edu.hawaii.its.api.type.Group;
 import edu.hawaii.its.api.type.Grouping;
 import edu.hawaii.its.api.type.Person;
+import edu.hawaii.its.api.util.Strings;
 
 import edu.internet2.middleware.grouperClient.ws.beans.WsGetMembersResult;
 import edu.internet2.middleware.grouperClient.ws.beans.WsGetMembersResults;
@@ -47,21 +48,6 @@ import static org.junit.Assert.fail;
 @SpringBootTest(classes = { SpringBootWebApplication.class })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class GroupingAssignmentServiceTest {
-
-    @Value("${groupings.api.grouping_admins}")
-    private String GROUPING_ADMINS;
-
-    @Value("${groupings.api.grouping_apps}")
-    private String GROUPING_APPS;
-
-    @Value("${groupings.api.test.username}")
-    private String USERNAME;
-
-    @Value("${groupings.api.test.name}")
-    private String NAME;
-
-    @Value("${groupings.api.test.uhuuid}")
-    private String UHUUID;
 
     @Value("${groupings.api.person_attributes.uhuuid}")
     private String UHUUID_KEY;
@@ -99,7 +85,6 @@ public class GroupingAssignmentServiceTest {
     private Group adminGroup = new Group();
 
     private static final String APP_USER = "app";
-    private static final Person APP_PERSON = new Person(APP_USER, APP_USER, APP_USER);
     private List<Person> apps = new ArrayList<>();
     private Group appGroup = new Group();
 
@@ -107,16 +92,7 @@ public class GroupingAssignmentServiceTest {
     private List<WsSubjectLookup> lookups = new ArrayList<>();
 
     @Autowired
-    private GroupingRepository groupingRepository;
-
-    @Autowired
     private GroupRepository groupRepository;
-
-    @Autowired
-    private PersonRepository personRepository;
-
-    @Autowired
-    private MembershipRepository membershipRepository;
 
     @Autowired
     private GroupingAssignmentService groupingAssignmentService;
@@ -125,15 +101,20 @@ public class GroupingAssignmentServiceTest {
     private MembershipService membershipService;
 
     @Autowired
-    private GrouperFactoryService grouperFS;
-
-    @Autowired
     private DatabaseSetupService databaseSetupService;
 
     @Before
     public void setup() {
         databaseSetupService.initialize(users, lookups, admins, adminGroup, appGroup);
-
+        System.out.println(Strings.fill('v', 99));
+        for (Person a : admins) {
+            System.out.println(" ::: " + a);
+        }
+        System.out.println(Strings.fill('-', 59));
+        for (Person u : users) {
+            System.out.println(" ::: " + u);
+        }
+        System.out.println(Strings.fill('^', 99));
     }
 
     @Test
@@ -547,5 +528,31 @@ public class GroupingAssignmentServiceTest {
         // Check if stale subject id produces the right username restructure
         List<Person> group1Members = groups.get(GROUPING_3_BASIS_PATH).getMembers();
         assertThat(group1Members.get(0).getUsername(), equalTo("User Not Available."));
+    }
+
+    @Test
+    public void groupingsToOptIntoTest() {
+        List<String> newPath = new ArrayList<>();
+
+        newPath.add("BASIS");
+
+        List<Grouping> result = groupingAssignmentService.groupingsToOptInto(users.get(0).getUsername(), newPath);
+
+        assertThat(result.get(0).getName(), is("grouping1"));
+    }
+
+    @Test
+    public void groupingsToOptOutOfTest() {
+        List<String> newPath = new ArrayList<>();
+        List<String> optOut = new ArrayList<>();
+
+        newPath.add("BASIS");
+
+        List<Grouping> result = groupingAssignmentService.groupingsToOptInto(users.get(0).getUsername(), newPath);
+
+        List<Grouping> result2 = groupingAssignmentService.groupingsOptedOutOf(users.get(0).getUsername(), newPath);
+
+        System.out.println(result2 + "--------------------------------------------");
+
     }
 }
